@@ -11,7 +11,8 @@ class PeopleTable extends React.Component {
             age: ''
         },
         people: [],
-        isAdding: false
+        currentEditPersonId: '',
+        isEditMode: false
      }
 
      componentDidMount = () => {
@@ -27,30 +28,74 @@ this.setState({person: personCopy});
      }
 
      onAddClick = () => {
-         this.setState({isAdding: true});
+         
          axios.post('/api/people/add', this.state.person).then(() => {
             axios.get('/api/people/getall').then(({data}) => {
                 this.setState({people: data,
-                person: {firstName: '', lastName: '', age: ''},
-            isAdding: false});
+                person: {firstName: '', lastName: '', age: ''}
+            });
          });
      });
     }
 
+    onEditClick = person => {
+        this.setState({ person, isEditMode: true, currentEditPersonId: person.id });
+    }
+
+    onUpdateClick = () => {
+        axios.post('/api/people/update', { ...this.state.person, id: this.state.currentEditPersonId }).then(() => {
+            axios.get('/api/people/getall').then(({ data }) => {
+                this.setState({
+                    people: data,
+                    person: { firstName: '', lastName: '', age: '' }
+                });
+            });
+        });
+    }
+
+    resetToAddMode = () => {
+        this.setState({
+            isEditMode: false,
+            person: {
+                firstName: '',
+                lastName: '',
+                age: ''
+            },
+            currentEditPersonId: 0
+        })
+    }
+
+    onCancelClick = () => {
+        this.resetToAddMode();
+    }
+
+    onDeleteClick = id => {
+        axios.post('/api/people/delete', { id }).then(() => {
+            axios.get('/api/people/getall').then(({ data }) => {
+                this.setState({
+                    people: data,
+                    person: { firstName: '', lastName: '', age: '' }
+                });
+            });
+        });
+    }
+
     render() { 
-        const {people, person, isAdding} = this.state;
+        const {people, person} = this.state;
         const {firstName, lastName, age} = person;
         return ( 
            <div className="container" style={{marginTop: 60}}>
                <AddPersonForm
-               isAdding={isAdding}
-               firstName={firstName}
-               lastName={lastName}
-               age={age}
-               onFirstNameChange={this.onTextChange}
-               onLastNameChange={this.onTextChange}
-               onAgeChange={this.onTextChange}
-               onAddClick={this.onAddClick}/>
+                    firstName={firstName}
+                    lastName={lastName}
+                    age={age}
+                    onFirstNameChange={this.onTextChange}
+                    onLastNameChange={this.onTextChange}
+                    onAgeChange={this.onTextChange}
+                    onAddClick={this.onAddClick}
+                    onUpdateClick={this.onUpdateClick}
+                    onCancelClick={this.onCancelClick}
+                    isEditMode={this.state.isEditMode}     />
 
                <div className="row mt-4">
                    <div className="col-md-2">
@@ -59,11 +104,14 @@ this.setState({person: personCopy});
                                <tr>
                                    <th>First Name</th>
                                    <th>Last Name</th>
-                                   <th>Age</th>
+                                    <th>Age</th>
+                                    <th>Edit/Delete</th>
                                </tr>
                            </thead>
                            <tbody>
-                               {people.map(p => <PersonRow person={p} key={p.id}/>)}
+                                {people.map(p => <PersonRow person={p} key={p.id}
+                                    onEditClick={() => this.onEditClick(p)}
+                                    onDeleteClick={() => this.onDeleteClick(p.id)}   />)}
                            </tbody>
                        </table>
                    </div>

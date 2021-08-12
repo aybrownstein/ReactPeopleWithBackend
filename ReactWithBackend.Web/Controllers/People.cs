@@ -36,5 +36,28 @@ namespace ReactWithBackend.Web.Controllers
             var repo = new PeopleRepository(_connectionString);
             repo.Add(person);
         }
+
+        [HttpPost]
+        [Route("update")]
+        public void Update(Person person)
+        {
+            var repo = new PeopleRepository(_connectionString);
+            repo.Update(person);
+        }
+        [HttpPost]
+        [Route("Delete")]
+        public void Delete(Person person)
+        {
+            var repo = new PeopleRepository(_connectionString);
+            repo.Delete(person.Id);
+        }
+
+        [HttpGet]
+        [Route("Get")]
+        public Person GetById(int id)
+        {
+            var repo = new PeopleRepository(_connectionString);
+            return repo.Get(id);
+        }
     }
 }
